@@ -1,52 +1,58 @@
-# birth-analysis
-#🎉 Birth Analysis Project
+# Install required libraries
+pip install pandas
+pip install matplotlib seaborn
+pip install numpy
 
-# 📌 Overview
+# Import libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set()
 
-This project performs an exploratory data analysis (EDA) on a dataset of daily U.S. births using Python. The goal is to analyze birth trends by day, month, and year to uncover patterns and insights using data visualization and statistical summaries.
+# Load and clean the dataset
+births = pd.read_csv("births.csv")
+print(births.head())
 
+births['day'].fillna(0, inplace=True)
+births['day'] = births['day'].astype(int)
 
-# 📂 Features
+# Create 'decade' column
+births['decade'] = 10 * (births['year'] // 10)
+print(births.head())
 
-* Load and preprocess the birth dataset.
-* Group and analyze birth counts by year, month, day.
-* Visualize trends using line plots, heatmaps, and distributions.
-* Detect outliers and identify peak birth periods.
+# Pivot table by decade and gender
+birth_decade = births.pivot_table('births', index='decade', columns='gender', aggfunc='sum')
 
+# Plot births per decade
+birth_decade.plot()
+plt.ylabel("Total births per year")
+plt.title("Birth Trends by Gender and Decade")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
 
+# Remove outliers using IQR method
+quartiles = np.percentile(births['births'], [25, 50, 75])
+mean = quartiles[1]
+sigma = 0.74 * (quartiles[2] - quartiles[0])
 
-# 🧰 Technologies Used
+births = births.query('(births > @mean - 5 * @sigma) & (births < @mean + 5 * @sigma)')
 
-* Pandas – for data cleaning, grouping, and manipulation.
-* NumPy – for numerical operations and handling NaNs.
-* Matplotlib – for creating line and scatter plots.
-* Seaborn – for heatmaps and distribution visualizations.
+# Convert to datetime index
+births.index = pd.to_datetime(10000 * births.year + 100 * births.month + births.day, format='%Y%m%d')
+births['day of week'] = births.index.dayofweek
 
----
+# Average births by day of week and gender
+births_pivot = births.pivot_table('births', index='day of week', columns='gender', aggfunc='mean')
 
-# 🗃️ Dataset
-
-The dataset used is `US births 1994-2003`, containing:
-
-* Year, Month, Day of month, Day of week, and Number of Births
-
----
-
-# 📊 Visualizations
-
-* 📈 Line plot of average births per day.
-* 📅 Heatmap of births by month and day.
-* 📉 Histogram of birth distribution to detect outliers.
-
----
-
-### ▶️ How to Run
-
-1. Install dependencies:
-
-   ```bash
-   pip install pandas matplotlib numpy seaborn
-
+# Plot weekly birth trends
+births_pivot.plot()
+plt.title("Average Births by Day of Week")
+plt.ylabel("Mean Births")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
 
 
 
